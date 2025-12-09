@@ -47,7 +47,7 @@
       "secrets": [
         {
           "name": "DB_PASSWORD",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:973530737784:secret:rds-db-credentials/cluster-TSFADIQX3HFQBXEVE2QRUGWM4Y/onedao-user/1765228796090:password::"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:973530737784:secret:rds-db-credentials/cluster-TSFADIQX3HFQBXEVE2QRUGWM4Y/onedao-user/1765228796090-LtyBY0:password::"
         }
       ],
       "essential": true,
