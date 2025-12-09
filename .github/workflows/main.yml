@@ -1,0 +1,79 @@
+name: ECS Fargate CI/CD Deployment - Backend Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build, Push, & Deploy Backend to ECS
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: ap-south-1
+      ECR_REPOSITORY: consectus/one-dao-be #
+      ECS_CLUSTER: one-dao-cluster
+      ECS_SERVICE: one-daoService-be
+      ECS_CONTAINER_NAME: one-dao-cntr
+
+      ECS_TASK_DEFINITION_PATH: .github/workflows/ecs-task-def-be.json
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # --- 1. AWS Authentication (OIDC) ---
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::973530737784:role/GitHubActionsDeploymentRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      # --- 2. Build and Push to ECR ---
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # --- 3. Dynamic Variable Injection (RDS Config) ---
+      # This step reads GitHub variables and injects them into the local Task Definition JSON file.
+      - name: Inject Database Variables into Task Definition
+        # Ensure you have set DB_HOST and DB_USER as GitHub Repository Variables
+        run: |
+          # 1. Inject DB_HOST (GitHub Variable)
+          sed -i "s|RDS_HOST_PLACEHOLDER|${{ vars.DB_HOST }}|g" ${{ env.ECS_TASK_DEFINITION_PATH }}
+
+          # 2. Inject DB_USER (GitHub Variable)
+          sed -i "s|RDS_USER_PLACEHOLDER|${{ vars.DB_USER }}|g" ${{ env.ECS_TASK_DEFINITION_PATH }}
+
+      # --- 4. Deploy to ECS ---
+      - name: Render Amazon ECS Task Definition
+        id: render-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          # Use the JSON file that was just updated with the DB variables
+          task-definition: ${{ env.ECS_TASK_DEFINITION_PATH }}
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ env.IMAGE_URI }}
+
+      - name: Deploy Amazon ECS Task Definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-task.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
