@@ -26,14 +26,23 @@
         {
           "name": "DB_USER",
           "value": "onedbuser"
-        },
-"secrets": [
-    {
-      "name": "DB_PASSWORD",
-      "valueFrom": "arn:aws:secretsmanager:ap-south-1:973530737784:secret:your-db-password-name"
-    }
-],
-      ]
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:973530737784:secret:your-db-password-name"
+        }
+      ],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/one-daoService-be",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
     }
   ]
 }
