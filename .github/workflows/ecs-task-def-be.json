@@ -27,10 +27,12 @@
           "name": "DB_USER",
           "value": "onedbuser"
         },
-        {
-          "name": "DB_PASSWORD",
-          "value": "Password123!"
-        }
+"secrets": [
+    {
+      "name": "DB_PASSWORD",
+      "valueFrom": "arn:aws:secretsmanager:ap-south-1:973530737784:secret:your-db-password-name"
+    }
+],
       ]
     }
   ]
