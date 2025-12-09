@@ -20,12 +20,28 @@
       ],
       "environment": [
         {
+          "name": "DB_NAME",
+          "value": "onedaodb"
+        },
+        {
           "name": "DB_HOST",
           "value": "database-one-dao-instance-1.cxmw0mi0czbu.ap-south-1.rds.amazonaws.com"
         },
         {
           "name": "DB_USER",
           "value": "onedbuser"
+        },
+        {
+          "name": "PORT",
+          "value": "8000"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "ACCESS_TOKEN_SECRET",
+          "value": "yedn"
         }
       ],
       "secrets": [
